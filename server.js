@@ -1,10 +1,28 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const ShortUrl = require('./models/shortUrl');
 const app = express();
 
-app.set('view engine', 'ejs');
+mongoose
+  .connect('mongodb://localhost/urlShortener', {
+    usenewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('Connected to MongoDB'));
 
-app.get('/', (req, res) => {
-  res.render('index');
+app.set('view engine', 'ejs');
+app.use(express.urlencoded({ extended: false }));
+
+app.get('/', async (req, res) => {
+  const shortUrls = await ShortUrl.find();
+
+  res.render('index', { shortUrls: shortUrls });
 });
 
-app.listen(process.env.PORT || 3000);
+app.post('/shortUrls', async (req, res) => {
+  await ShortUrl.create({ full: req.body.fullUrl });
+
+  res.redirect('/');
+});
+
+app.listen(process.env.PORT || 5000);
